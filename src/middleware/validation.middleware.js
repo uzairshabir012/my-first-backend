@@ -9,19 +9,23 @@ const validateResult = (req, res, next) => {
         });
     }
 
-    next();
+    return next();
 };
 
 const registerUserValidationRules = [
     body("username")
         .isString()
-        .isLength({ min: 3, max: 20 }),
+        .withMessage("Username must be a string")
+        .isLength({ min: 3, max: 20 })
+        .withMessage("Username must be between 3 and 20 characters"),
 
     body("email")
-        .isEmail(),
+        .isEmail()
+        .withMessage("Invalid email address"),
 
     body("password")
-        .isLength({ min: 6 }),
+        .isLength({ min: 6 })
+        .withMessage("Password must be at least 6 characters long"),
 
     validateResult
 ];
@@ -29,15 +33,22 @@ const registerUserValidationRules = [
 const loginUserValidationRules = [
     body("email")
         .optional()
-        .isEmail(),
+        .isEmail()
+        .withMessage("Invalid email address"),
 
     body("username")
         .optional()
-        .isLength({ min: 6, max: 20 }),
-    validateResult
-]
+        .isLength({ min: 3, max: 20 })
+        .withMessage("Username must be between 3 and 20 characters"),
 
+    body("password")
+        .isLength({ min: 6 })
+        .withMessage("Password must be at least 6 characters long"),
+
+    validateResult
+];
 
 module.exports = {
-    registerUserValidationRules, loginUserValidationRules
+    registerUserValidationRules,
+    loginUserValidationRules
 };
