@@ -1,0 +1,222 @@
+const musicModel = require('../models/music.model');
+const uploadFile = require('../services/music.service');
+const albumModel = require('../models/album.model');
+
+
+async function createMusic(req, res) {
+
+
+    const { title } = req.body;
+    const file = req.file;
+
+
+    if (!title) {
+        return res.status(400).json({ message: "Title is Required" })
+    }
+
+    if (!file) {
+        return res.status(400).json({ message: "Music file is required" })
+    }
+
+
+    const result = await uploadFile(file.buffer.toString("base64"));
+
+
+    const music = await musicModel.create({
+        uri: result.url,
+        title: title,
+        artist: req.user.id
+    })
+
+    res.status(201).json({
+        message: "Music Created",
+        music: {
+            id: music._id,
+            uri: music.uri,
+            title: music.title,
+            artist: music.artist
+        }
+    })
+
+
+}
+
+
+async function createAlbum(req, res) {
+    try {
+
+        const { title, musics } = req.body;
+
+        const album = await albumModel.create({
+            title,
+            artist: req.user.id,
+            musics: musics
+        })
+
+        res.status(201).json({
+            message: "Album created",
+            album: {
+                id: album._id,
+                title: album.title,
+                musics: album.musics,
+                artist: album.artist
+            }
+        })
+
+    }
+
+
+    catch (err) {
+        console.error("Album Error:", err);
+        res.status(500).json({ message: "Internal Server Error", error: err.message });
+    }
+}
+
+
+async function getAllMusics(req, res) {
+    const musics = await musicModel
+        .find()
+        .populate("artist", "username email");
+    res.status(200).json({
+        message: "All Musics",
+        musics: musics
+    })
+}
+
+
+async function getAllAlbums(req, res) {
+    try {
+
+        const albums = await albumModel.find().populate("artist", "username email").populate("musics");
+        res.status(200).json({
+            message: "All Albums",
+            albums: albums
+        });
+
+
+    }
+    catch (err) {
+        console.error("Error fetching albums:", err);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: err.message
+        });
+    }
+
+}
+
+async function getAlbumByID(req, res) {
+    const albumID = req.params.albumID;
+
+    const album = await albumModel.findById(albumID).populate("artist", "username email").populate("musics");
+
+
+    return res.status(200).json({
+        message: "Album fetched successdfully",
+        album: album
+    })
+}
+
+
+async function deleteMusic(req, res) {
+    try {
+
+        const musicId = req.params.id;
+
+        const music = await musicModel.findById(musicId);
+
+        if (!music) {
+            return res.status(404).json({ message: "Music not found!" })
+        }
+
+        if (music.artist.toString() !== req.user.id) {
+            return res.status(403).json({ message: "You can only delete your own music" })
+        }
+
+
+        await musicModel.findByIdAndDelete(musicId);
+
+
+        res.status(200).json({ message: "Music deleted successfully" })
+
+    }
+
+
+
+
+    catch (err) {
+        console.error("Delete Music Error:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+
+    }
+}
+
+
+async function deleteAlbum(req, res) {
+
+    try {
+
+        const albumId = req.params.id;
+
+        const album = await albumModel.findById(albumId);
+
+        if (!album) {
+            return res.status(404).json({ message: "Album not found!" })
+        }
+
+        if (album.artist.toString() !== req.user.id) {
+            return res.status(403).json({ message: "You can only delete your own Album" })
+        }
+
+        await albumModel.findByIdAndDelete(albumId);
+
+        res.status(200).json({ message: "Album deleted sucessfully" })
+
+
+    }
+
+
+
+    catch (err) {
+        console.error("Delete Album Error:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+
+
+    }
+}
+
+
+async function updateMusic(req, res) {
+
+    try {
+
+        const musicId = req.params.id;
+        const { title } = req.body;
+
+
+        if (!title) {
+            return res.status(400).json({ message: "Title is required" })
+        }
+
+        const music = await musicModel.findById(musicId);
+
+        if (!music) {
+            return res.status(400).json({ message: "Music not found" })
+        }
+
+        if (music.artist.toString() !== req.user.id) {
+            return res.status(403).json({ message: "You can only update your own music" });
+        }
+
+    }
+
+
+
+    catch (err) {
+
+
+    }
+}
+
+
+module.exports = { createMusic, createAlbum, getAllMusics, getAllAlbums, getAlbumByID, deleteMusic, deleteAlbum };
