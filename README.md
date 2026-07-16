@@ -145,4 +145,4 @@ Only **Artist** can:
 
 ## Author
 
-Created by **Uzi** for learning Node.js, Express.js, MongoDB, JWT Authentication, and REST APIs.
+Created by **Uzair** for learning Node.js, Express.js, MongoDB, JWT Authentication, and REST APIs.
